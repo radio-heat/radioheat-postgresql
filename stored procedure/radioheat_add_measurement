@@ -18,8 +18,9 @@ INSERT INTO "public"."WlanMeasurement"
 )
 VALUES
 (
-  (($1->'datetime'->>'day') || ' ' ||		-- day
-($1->'datetime'->>'month') || '.' ||	-- month
+  ( ($1->'datetime'->>'year') || '.' ||		-- year
+    ($1->'datetime'->>'month') || '.' ||	-- month
+    ($1->'datetime'->>'day') || ' ' ||		-- day
     ($1->'datetime'->>'year') || '.' ||		-- year
     ($1->'datetime'->>'hour') || ':' ||		-- hour
     ($1->'datetime'->>'minute') || ':' ||	-- minute
