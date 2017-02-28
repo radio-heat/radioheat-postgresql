@@ -1,0 +1,22 @@
+Erstellt: Philip Jurke
+
+- Function: radioheat_list_frequency_band_24()
+
+-- DROP FUNCTION radioheat_list_frequency_band_24();
+
+CREATE OR REPLACE FUNCTION radioheat_list_frequency_band_24()
+  RETURNS integer[] AS
+$BODY$
+SELECT ARRAY(
+	SELECT DISTINCT frequency
+	FROM "public"."WlanNetworks"
+	WHERE frequency > 2400
+	AND frequency < 2500
+	ORDER BY frequency ASC
+);
+$BODY$
+  LANGUAGE sql VOLATILE
+  COST 100;
+ALTER FUNCTION radioheat_list_frequency_band_24()
+  OWNER TO postgres;
+

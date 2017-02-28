@@ -1,0 +1,24 @@
+Erstellt: Philip Jurke
+
+-- Function: radioheat_list_frequency_band_5()
+
+-- DROP FUNCTION radioheat_list_frequency_band_5();
+
+CREATE OR REPLACE FUNCTION radioheat_list_frequency_band_5()
+  RETURNS integer[] AS
+$BODY$
+
+SELECT ARRAY(
+	SELECT DISTINCT frequency
+	FROM "public"."WlanNetworks"
+	WHERE frequency > 5000
+	AND frequency < 6000
+	ORDER BY frequency ASC
+);
+
+$BODY$
+  LANGUAGE sql VOLATILE
+  COST 100;
+ALTER FUNCTION radioheat_list_frequency_band_5()
+  OWNER TO postgres;
+

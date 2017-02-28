@@ -1,0 +1,19 @@
+Erstellt: Philip Jurke
+
+CREATE OR REPLACE FUNCTION radioheat_get_networks_around_point(
+    IN "argLatitude" double precision,
+    IN "argLongitude" double precision)
+  RETURNS TABLE("time" timestamp with time zone, latitude double precision, longitude double precision, frequency integer, strength integer) AS
+$BODY$SELECT "time", ST_X(Measurement.location::geometry) AS latitude, ST_Y(Measurement.location::geometry) AS longitude, frequency, strength
+FROM "public"."WlanMeasurement" AS Measurement
+JOIN "public"."WlanNetworks" AS Network
+ON Measurement.id = Network.measurement_fk
+WHERE ST_DWithin("location", ST_MakePoint($1, $2), 5000)
+ORDER BY ST_Distance(Measurement.location, ST_MakePoint($1, $2))
+LIMIT 1000;$BODY$
+  LANGUAGE sql VOLATILE
+  COST 100
+  ROWS 500;
+ALTER FUNCTION radioheat_get_networks_around_point(double precision, double precision)
+  OWNER TO postgres;
+

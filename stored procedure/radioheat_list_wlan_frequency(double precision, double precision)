@@ -1,0 +1,41 @@
+Erstellt: Philip Jurke
+
+-- Function: radioheat_list_wlan_frequency(double precision, double precision)
+
+-- DROP FUNCTION radioheat_list_wlan_frequency(double precision, double precision);
+
+CREATE OR REPLACE FUNCTION radioheat_list_wlan_frequency(
+    IN "argLatitude" double precision,
+    IN "argLongitude" double precision)
+  RETURNS TABLE(latitude double precision, longitude double precision, amount bigint) AS
+$BODY$
+
+SELECT ST_X(Measurement.location::geometry) AS Latitude, ST_Y(Measurement.location::geometry) AS Longitude, amount
+FROM "public"."WlanMeasurement" AS Measurement
+JOIN
+(
+	SELECT measurement_fk AS id, COUNT(frequency) AS amount
+	FROM "public"."WlanNetworks"
+	GROUP BY measurement_fk
+) AS Networks
+ON Measurement.id = Networks.id
+WHERE ST_DWithin("location", ST_MakePoint($1, $2), 500)
+ORDER BY ST_Distance(Measurement.location, ST_MakePoint($1, $2))
+LIMIT 100;
+
+-- SELECT ST_X(Measurement.location::geometry) AS latitude, ST_Y(Measurement.location::geometry) AS longitude, COUNT(Network.bssid)
+-- FROM "public"."WlanMeasurement" AS Measurement
+-- JOIN "public"."WlanNetworks" AS Network
+-- ON Measurement.id = Network.measurement_fk
+-- WHERE ST_DWithin("location", ST_MakePoint($1, $2), 500)
+-- GROUP BY Measurement.location
+-- ORDER BY ST_Distance(Measurement.location, ST_MakePoint($1, $2))
+-- LIMIT 100;
+
+$BODY$
+  LANGUAGE sql VOLATILE
+  COST 100
+  ROWS 50;
+ALTER FUNCTION radioheat_list_wlan_frequency(double precision, double precision)
+  OWNER TO postgres;
+

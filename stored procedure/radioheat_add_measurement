@@ -1,0 +1,96 @@
+Erstellt: Philip Jurke
+-- Function: radioheat_add_measurement(json)
+
+-- DROP FUNCTION radioheat_add_measurement(json);
+
+CREATE OR REPLACE FUNCTION radioheat_add_measurement("argJsonData" json)
+  RETURNS void AS
+$BODY$DECLARE
+  id BIGINT;
+  network JSON;
+
+BEGIN
+
+INSERT INTO "public"."WlanMeasurement"
+(
+  "time",
+  "location"
+)
+VALUES
+(
+  (($1->'datetime'->>'day') || ' ' ||		-- day
+($1->'datetime'->>'month') || '.' ||	-- month
+    ($1->'datetime'->>'year') || '.' ||		-- year
+    ($1->'datetime'->>'hour') || ':' ||		-- hour
+    ($1->'datetime'->>'minute') || ':' ||	-- minute
+    ($1->'datetime'->>'second'))::timestamp with time zone,		-- second
+  ST_SetSRID(ST_MakePoint(cast($1->'location'->>'latitude' as double precision), cast($1->'location'->>'longitude' as double precision)), 4326)
+)
+RETURNING "WlanMeasurement".id INTO id;
+
+FOR network IN SELECT * FROM json_array_elements($1->'wlanNetworks')
+LOOP
+  INSERT INTO "public"."WlanNetworks"
+  (
+    measurement_fk,
+    bssid,
+    frequency,
+    ssid,
+    strength
+  )
+  VALUES
+  (
+    id,
+    cast(network->>'bssid' as macaddr),
+    cast(network->>'frequency' as integer),
+    network->>'ssid',
+    cast(network->>'strength' as integer)
+  );
+END LOOP;
+
+END;$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION radioheat_add_measurement(json)
+  OWNER TO appserver;
+
+
+
+
+
+
+  (($1->'datetime'->>'day') || ' ' ||		-- day
+    ($1->'datetime'->>'month') || '.' ||	-- month
+    ($1->'datetime'->>'year') || '.' ||		-- year
+    ($1->'datetime'->>'day') || ' ' ||		-- day
+    ($1->'datetime'->>'hour') || ':' ||		-- hour
+    ($1->'datetime'->>'minute') || ':' ||	-- minute
+    ($1->'datetime'->>'second'))::timestamp with time zone,		-- second
+  ST_SetSRID(ST_MakePoint(cast($1->'location'->>'latitude' as double precision), cast($1->'location'->>'longitude' as double precision)), 4326)
+)
+RETURNING "WlanMeasurement".id INTO id;
+
+FOR network IN SELECT * FROM json_array_elements($1->'wlanNetworks')
+LOOP
+  INSERT INTO "public"."WlanNetworks"
+  (
+    measurement_fk,
+    bssid,
+    frequency,
+    ssid,
+    strength
+  )
+  VALUES
+  (
+    id,
+    cast(network->>'bssid' as macaddr),
+    cast(network->>'frequency' as integer),
+    network->>'ssid',
+    cast(network->>'strength' as integer)
+  );
+END LOOP;
+
+END;
+
+### CODE ###
+
